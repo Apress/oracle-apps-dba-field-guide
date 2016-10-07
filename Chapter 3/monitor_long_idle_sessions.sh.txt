@@ -1,0 +1,52 @@
+#Script used to monitor sessions with a long idle time
+#THRESHOLD is the maximum duration that an inactive session 
+#may remain connected to the database
+THRESHOLD=$1
+LOGFILE=/tmp/high_idle_$ORACLE_SID.log
+sqlplus -s apps/apps << EOF
+  set heading off
+  spool $LOGFILE
+  select distinct '$ORACLE_SID - High Idle sessions above Threshold.' 
+  from v\$session db_session, 
+    v\$process process,
+    v\$session_wait wait
+  where process.addr = db_session.paddr
+    and db_session.sid = wait.sid
+    and type='USER'
+    and db_session.username is not null
+    and db_session.program not like 'JDBC%'
+    and last_call_et>$THRESHOLD;
+  -- add data to logfile
+  select db_session.username,
+    db_session.osuser,
+    db_session.terminal, 
+    db_session.sid, 
+    db_session.serial#,
+    process.spid,
+    db_session.process, 
+    wait.event, 
+    db_session.program,
+    to_char(logon_time,'dd-mm-yy hh:mi am') "LOGON",
+    floor(last_call_et/3600)||':'||
+    floor(mod(last_call_et,3600)/60)||':'||
+    mod(mod(last_call_et,3600),60) "IDLE"
+  from v\$session db_session, 
+    v\$process process,
+    v\$session_wait wait
+  where process.addr = db_session.paddr
+    and db_session.sid = wait.sid
+    and type='USER'
+    and db_session.username is not null
+    and db_session.program not like 'JDBC%'
+    and last_call_et>$THRESHOLD
+  order by last_call_et;
+  spool off
+  exit
+EOF
+RETURN_CODE=`grep "Threshold" $LOGFILE | wc -l`
+if [ $RETURN_CODE -eq 0 ]
+  then
+ exit 0
+else
+ exit 1
+fi

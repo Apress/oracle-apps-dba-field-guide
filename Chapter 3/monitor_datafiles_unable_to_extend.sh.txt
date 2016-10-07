@@ -1,0 +1,28 @@
+#Script used to monitor datafiles close to their maximum size
+#Threshold is number of extents away from the maximum datafile size
+THRESHOLD=$1
+LOGFILE=/tmp/datafile_extents_$ORACLE_SID.log
+sqlplus -s apps/apps << EOF
+  set heading off
+  spool $LOGFILE
+  select distinct '$ORACLE_SID - Threshold for datafiles near max extents'
+  from dba_data_files
+  where autoextensible='YES'
+    and trunc((maxblocks-blocks) /increment_by) <= $THRESHOLD
+    and increment_by != 0 ;
+  -- add data to logfile
+  select file_name, trunc((maxblocks-blocks) /increment_by)
+  from dba_data_files
+  where autoextensible='YES'
+    and trunc((maxblocks-blocks) /increment_by) <= $THRESHOLD
+    and increment_by != 0;
+  spool off
+  exit
+EOF
+RETURN_CODE=`grep "Threshold" $LOGFILE | wc -l`
+if [ $RETURN_CODE -eq 0 ]
+  then
+ exit 0
+else
+ exit 1
+fi

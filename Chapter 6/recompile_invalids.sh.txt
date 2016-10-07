@@ -1,0 +1,11 @@
+#Script used to recompile invalid objects in the database
+LOGFILE=/tmp/recompile_parallel_$ORACLE_SID.log
+sqlplus -s sys/change_on_install << EOF
+  spool $LOGFILE;
+  select count(1) from dba_objects where status='INVALID';
+  exec utl_recomp.recomp_parallel(8);
+  select count(1) from dba_objects where status='INVALID';
+  spool off;
+  exit
+EOF
+exit 0

@@ -1,0 +1,14 @@
+#Script used to monitor filesystem free space
+#Threshold is amount of free MB for the filesystem
+THRESHOLD=$1
+FILESYSTEM=$2
+LOGFILE=/tmp/space_avail_$FILESYSTEM.log
+HOSTNAME=`hostname`
+AVAILABLE=`df -m /$FILESYSTEM | grep $FILESYSTEM | awk '{print $3}'`
+if [ $AVAILABLE -gt $THRESHOLD ]
+  then
+    exit 0
+else
+   echo "$HOSTNAME - $FILESYSTEM threshold $THRESHOLD exceeded" > $LOGFILE
+   exit 1
+fi

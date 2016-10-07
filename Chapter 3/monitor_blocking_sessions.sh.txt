@@ -1,0 +1,18 @@
+#This script is used to monitor for blocking sessions
+LOGFILE=/tmp/blocking_$ORACLE_SID.txt
+sqlplus -s apps/apps << EOF
+  set heading off
+  spool $LOGFILE
+  select sid
+  from v\$lock
+  where block > 0;
+  spool off
+  exit
+EOF
+RETURN_CODE=`grep "no rows" $LOGFILE | wc -l`
+if [ $RETURN_CODE -eq 0 ]
+  then
+ exit 0
+else
+ exit 1
+fi

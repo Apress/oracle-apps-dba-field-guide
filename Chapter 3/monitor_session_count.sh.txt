@@ -1,0 +1,25 @@
+#This script is used to monitor the total number of sessions
+#THRESHOLD is the maximum number of sessions
+#that may be connected to the database at one time
+THRESHOLD=$1
+LOGFILE=/tmp/high_sessions_$ORACLE_SID.txt
+sqlplus -s apps/apps << EOF
+  set heading off
+  spool $LOGFILE
+  select '$ORACLE_SID - High Session Threshold - '||count(1) 
+  from v\$session 
+  having count(1) > $THRESHOLD
+union
+  select 'no rows'
+  from v\$session 
+  having count(1) <= $THRESHOLD;
+  spool off
+  exit
+EOF
+RETURN_CODE=`grep "Threshold" $LOGFILE | wc -l`
+if [ $RETURN_CODE -eq 0 ]
+  then
+ exit 0
+else
+ exit 1
+fi

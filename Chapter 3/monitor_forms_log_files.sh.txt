@@ -1,0 +1,12 @@
+#Script used to monitor creation of forms dump files
+FORMS_DIR=$1
+LOGFILE=/tmp/forms_dumpfiles_$ORACLE_SID.log
+
+ls -l $FORMS_DIR/f60webmx_dump* > $LOGFILE
+if [ $? -eq 0 ]
+ then
+   # There are dump files, return an error code
+   exit 1
+else
+   exit 0
+fi

@@ -1,0 +1,33 @@
+#Script used to identify objects for sizing limitations
+LOGFILE=/tmp/extent_room_$ORACLE_SID.log
+sqlplus -s apps/apps << EOF
+  set heading off
+  spool $LOGFILE
+  select distinct '$ORACLE_SID - Threshold - Not enough space for next extent.'
+  from dba_segments a
+  where not exists (select 'x'
+      from dba_free_space b
+      where a.tablespace_name = b.tablespace_name
+         and b.bytes > a.next_extent);
+  -- add data to logfile
+  select tablespace_name,
+    owner,
+    segment_name,
+    segment_type,
+    to_char((next_extent/1024),'999,999')||'K' next_extent_size
+  from dba_segments a
+  where not exists (select 'x'
+      from dba_free_space b
+      where a.tablespace_name = b.tablespace_name
+         and b.bytes > a.next_extent)
+  order by tablespace_name,segment_name;
+  spool off
+  exit
+EOF
+RETURN_CODE=`grep "Threshold" $LOGFILE | wc -l`
+if [ $RETURN_CODE -eq 0 ]
+  then
+ exit 0
+else
+ exit 1
+fi

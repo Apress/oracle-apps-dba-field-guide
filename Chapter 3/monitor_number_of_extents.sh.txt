@@ -1,0 +1,30 @@
+#Script used to monitor objects that are close to their max number of extents
+#Threshold is number of extents from the maximum 
+THRESHOLD=$1
+LOGFILE=/tmp/max_extents_$ORACLE_SID.log
+sqlplus -s apps/apps << EOF
+  set heading off
+  spool $LOGFILE
+  select distinct '$ORACLE_SID - Threshold for objects near max extents'
+  from dba_segments
+  where max_extents - extents <= $THRESHOLD;
+  -- add data to logfile
+  select owner,
+    segment_name,
+    segment_type,
+    tablespace_name,
+    extents,
+    max_extents
+  from dba_segments
+  where max_extents - extents <= $THRESHOLD
+  order by extents DESC;
+  spool off
+  exit
+EOF
+RETURN_CODE=`grep "Threshold" $LOGFILE | wc -l`
+if [ $RETURN_CODE -eq 0 ]
+  then
+ exit 0
+else
+ exit 1
+fi

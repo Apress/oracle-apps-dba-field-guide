@@ -1,0 +1,10 @@
+#Script used to monitor the database alert log file
+LOGFILE=/tmp/database_alert_$ORACLE_SID.log
+RETURN_CODE=`grep ORA- /[bdump]/alert.log | wc -l`
+if [ $RETURN_CODE -eq 0 ]
+  then
+ exit 0
+else
+ echo "$ORACLE_SID - There are $RETURN_CODE errors in Alert log" > $LOGFILE
+ exit 1
+fi

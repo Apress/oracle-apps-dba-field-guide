@@ -1,0 +1,11 @@
+#Script used to monitor the listener availability
+LISTENER=$1
+LOGFILE=/tmp/listener_$ORACLE_SID.log
+lsnrctl status $LISTENER
+if [ $? -eq 0 ]
+  then
+   exit 0
+else
+   echo "$LISTENER is down" > $LOGFILE   
+   exit 1
+fi

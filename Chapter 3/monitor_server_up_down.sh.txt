@@ -1,0 +1,11 @@
+#Script used to monitor server availability
+SERVER_NAME=$1
+LOGFILE=/tmp/server_check_$SERVER_NAME.txt
+ping -c1 $SERVER_NAME
+if [ $? -eq 1 ] 
+  then
+   echo "Server $SERVER_NAME is unreachable" > $LOGFILE
+   exit 1
+else
+   exit 0
+fi

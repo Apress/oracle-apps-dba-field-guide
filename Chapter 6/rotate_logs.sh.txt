@@ -1,0 +1,25 @@
+#Script used to rotate and remove log files > 30 days old
+#Script name is rotate_logs.sh
+LOGFILES=$1
+NUM_DAYS_RETAIN=30
+DATE=`date +%m%d%y`
+#read in list of logfiles
+
+awk '{print $0}' $LOGFILES | while read FILENAME
+do
+  # check that file exists.
+  if [ -f $FILENAME ]
+  then
+    # Make sure the entry does not refer to multiple files
+    RESULTS=`ls -l $FILENAME | wc -l`
+    if [ $RESULTS -gt 1 ]
+    then
+      exit 1
+    fi
+    # backup file and remove old copies
+    cp $FILENAME $FILENAME.$DATE
+    cp /dev/null $FILENAME
+    find . -name "$FILENAME.*" -a -mtime +NUM_DAYS_RETAIN -exec rm {} \;
+  fi
+done
+exit 0

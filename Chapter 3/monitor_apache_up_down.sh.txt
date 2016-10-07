@@ -1,0 +1,10 @@
+#Script used to monitor Apache Server availability
+LOGFILE=/tmp/apache_updown.log
+adapcctl.sh status 
+if [ $? –eq 1 ]
+ then
+   echo "$ORACLE_SID - Apache is down" > $LOGFILE
+   exit 1
+  else
+   exit 0
+fi

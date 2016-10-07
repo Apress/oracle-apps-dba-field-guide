@@ -1,0 +1,29 @@
+#Script used to monitor for application profile changes
+#Threshold is the number of days to query for profile changes
+#For example, if you set it to 7, all profile changes that
+#have occurred in the past 7 days will be displayed.
+THRESHOLD=$1
+LOGFILE=/tmp/profile_changes_$ORACLE_SID.txt
+sqlplus -s apps/apps << EOF
+  set heading off
+  spool $LOGFILE
+  select '$ORACLE_SID - Profile Changes Past '||
+    'Threshold of $THRESHOLD days - '||count(1) 
+  from fnd_profile_option_values
+  where last_update_date > (sysdate-$THRESHOLD)
+  having count(1) > $THRESHOLD
+union
+  select 'no rows'
+  from fnd_profile_option_values
+  where last_update_date <= (sysdate-$THRESHOLD)
+  having count(1) <= $THRESHOLD;
+  spool off
+  exit
+EOF
+RETURN_CODE=`grep "Threshold" $LOGFILE | wc -l`
+if [ $RETURN_CODE -eq 0 ]
+  then
+ exit 0
+else
+ exit 1
+fi

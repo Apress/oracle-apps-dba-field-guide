@@ -1,0 +1,14 @@
+#Script used to monitor database availability
+LOGFILE=/tmp/database_down_$ORACLE_SID.txt
+sqlplus -s apps/apps << EOF
+  select user
+  from dual;
+  exit
+EOF
+if [ $? -eq 0 ]
+  then
+   exit 0
+  else
+   echo "$ORACLE_SID is unavailable"> $LOGFILE
+   exit 1
+fi

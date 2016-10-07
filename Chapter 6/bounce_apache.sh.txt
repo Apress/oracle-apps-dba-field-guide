@@ -1,0 +1,9 @@
+# You may need to alter where the script looks for '_pages' depending upon
+# your environment
+LOGFILE=/tmp/bounce_apache_$ORACLE_SID.log
+$COMMON_TOP/admin/scripts/$CONTEXT_NAME/adapcctl.sh stop > $LOGFILE
+if [ -d $COMMON_TOP/_pages ]
+then
+  rm -r $COMMON_TOP/_pages/* >>$LOGFILE
+fi
+$COMMON_TOP/admin/scripts/$CONTEXT_NAME/adapcctl.sh start >> $LOGFILE

@@ -1,0 +1,48 @@
+#This script is used to monitor long-running sessions
+#Threshold is the number of days a session may be active
+#in the database. For example, for an 36 hour threshold use 1.5.
+THRESHOLD=$1
+LOGFILE=/tmp/long_running_$ORACLE_SID.log
+sqlplus -s apps/apps << EOF
+  set heading off
+  spool $LOGFILE
+  select distinct '$ORACLE_SID - Long Running Sessions above Threshold.'
+  from v\$session db_session, 
+    v\$process process,
+    v\$session_wait wait
+  where process.addr = db_session.paddr
+    and db_session.sid = wait.sid
+    and type='USER'
+    and db_session.username is not null
+    and db_session.username not in ('SYS', 'SYSTEM')
+    and db_session.program not like 'JDBC%'
+    and logon_time<(sysdate - $THRESHOLD);
+  -- add data to logfile
+  select db_session.username,
+    db_session.osuser,
+    db_session.terminal, 
+    wait.event, 
+    db_session.program, 
+    db_session.status,
+    to_char(logon_time,'dd-mm-yy hh:mi am') "LOGON"
+  from v\$session db_session, 
+    v\$process process,
+    v\$session_wait wait
+  where process.addr = db_session.paddr
+    and db_session.sid = wait.sid
+    and type='USER'
+    and db_session.username is not null
+    and db_session.username not in ('SYS', 'SYSTEM')
+    and db_session.program not like 'JDBC%'
+    and logon_time<(sysdate - $THRESHOLD)
+  order by logon_time;
+  spool off
+  exit
+EOF
+RETURN_CODE=`grep "Threshold" $LOGFILE | wc -l`
+if [ $RETURN_CODE -eq 0 ]
+  then
+ exit 0
+else
+ exit 1
+fi

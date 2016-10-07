@@ -1,0 +1,15 @@
+#Script used to monitor server CPU utilization
+#Threshold is the maximum percentage of CPU utilization acceptable
+THRESHOLD=$1
+TMPFILE=/tmp/tmp_cpu.txt
+LOGFILE=/tmp/cpu_utilization.log
+HOSTNAME=`hostname`
+vmstat 2 2 > $TMPFILE
+IDLE_TIME=`tail -1 $TMPFILE | awk '{ print $16 }'`
+if [ $IDLE_TIME –gt $THRESHOLD ]
+  then 
+    exit 0
+  else 
+    echo "$HOSTNAME - Server CPU utilization High" > $LOGFILE
+    exit 1
+fi

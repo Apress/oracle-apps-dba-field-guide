@@ -1,0 +1,9 @@
+#Script used to generate statistics using fnd_stats
+LOGFILE=/tmp/generate_stats_$ORACLE_SID.log
+sqlplus -s apps/apps << EOF
+  spool $LOGFILE;
+  exec fnd_stats.gather_schema_statistics ('ALL)
+  spool off;
+  exit
+EOF
+exit 0
